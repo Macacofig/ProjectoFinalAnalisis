@@ -14,4 +14,6 @@ public:
     vector<vector<Arista>>& GetListaAdyacenciasOriginal();
 
     int GetTotalNodos();
+
+    int GetTotalAristas();
 };

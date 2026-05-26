@@ -91,6 +91,109 @@ int main()
     }
 
     ArchivoNodos.close();
+    
+    /*
+    CREAR GRAFO
+    */
 
+    Grafo grafo(TotalNodosCargados);
+
+    int TotalAristasCargadas = 0;
+    /*
+    ABRIR EDGES.CSV
+    */
+
+    ifstream edgesFile("edges.csv");
+
+    if (!edgesFile.is_open()) {
+        cout << "Error al abrir edges.csv\n";
+        return 1;
+    }
+
+    /*
+    IGNORAR CABECERA
+    */
+
+    getline(edgesFile, LineaAgarradaDelCSV);
+    /*
+    ========================================================
+    LEER ARISTAS
+    ========================================================
+    */
+
+    while (getline(edgesFile, LineaAgarradaDelCSV)) {
+
+        vector<string> columns = splitCSVLine(LineaAgarradaDelCSV);
+
+        /*
+        CSV: osm_id,from_id,to_id,distance_m,fclass,oneway,maxspeed
+        */
+
+        long long Origen = stoll(columns[1]); //cambiar long long
+        long long Destino = stoll(columns[2]);
+
+        double Distancia = stod(columns[3]); // cambiar a double
+
+        int oneway = stoi(columns[5]); // cambiar a int
+
+        double VelocidadMaxima = 0.0;
+
+        /*
+        ALGUNAS FILAS PUEDEN TENER MAXSPEED VACIO
+        */
+
+        if (!columns[6].empty()) {
+            VelocidadMaxima = stod(columns[6]);
+        }
+
+        /*
+        CONVERTIR IDs REALES A INDICES INTERNOS
+        */
+
+        int OrigenIndex = IdRealAIndex[Origen];
+        int DestinoIndex = IdRealAIndex[Destino];
+
+        /*
+        AGREGAR ARISTA PRINCIPAL
+        */
+
+        grafo.AgregarArista(
+            OrigenIndex,
+            DestinoIndex,
+            Distancia,
+            VelocidadMaxima
+        );
+
+        TotalAristasCargadas++;
+
+        /*
+        SI NO ES ONEWAY  0 bicamino, 1 camino unico
+        AGREGAR ARISTA EN SENTIDO CONTRARIO
+        */
+
+        if (oneway == 0) {
+
+            grafo.AgregarArista(
+                DestinoIndex,
+                OrigenIndex,
+                Distancia,
+                VelocidadMaxima
+            );
+
+            TotalAristasCargadas++;
+        }
+    }
+
+    edgesFile.close();
+
+    /*
+    ESTADISTICAS FINALES
+    */
+
+    cout << "GRAFO CARGADO CORRECTAMENTE\n";
+
+    cout << "Total de nodos: "<< grafo.GetTotalNodos()<< "\n";
+
+    cout << "Total de aristas: "<< grafo.GetTotalAristas()<< "\n";
 }
 

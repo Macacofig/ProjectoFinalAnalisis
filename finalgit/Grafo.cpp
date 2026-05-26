@@ -20,3 +20,15 @@ int Grafo::GetTotalNodos()
 {
 	return ListaAdyacencias.size();
 }
+
+int Grafo::GetTotalAristas() // O (N) -> Cantidad de nodos diferentes registrados
+{
+    int TotalAristas = 0;
+
+    for (const auto& vecinos : ListaAdyacencias) 
+    {
+        TotalAristas += vecinos.size();
+    }
+
+    return TotalAristas;
+}

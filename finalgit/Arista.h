@@ -15,5 +15,8 @@ private:
 public:
     Arista(int NodoDestino, double DistanciaMetros, double VelocidadMaxima);
     
+    int GetNodoDestino();
+    double GetDistanciaMestros();
+    double GetVelocidadMaxima();
 };
 

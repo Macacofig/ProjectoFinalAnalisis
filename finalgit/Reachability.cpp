@@ -4,23 +4,23 @@ int Reachability::AlcanceVehicular(int nodoOrigen, Grafo& grafo, double limiteMe
 {
     int n = grafo.GetTotalNodos();
 
-    // DISTANCIAS MINIMAS
+    // DISTANCIAS MINIMAS desde el nodo origen al destino
 
-    vector<double> distancia(
-        n,
-        numeric_limits<double>::infinity()
-    );
+    vector<double> distancia(n,numeric_limits<double>::infinity()); 
 
     distancia[nodoOrigen] = 0;
 
     /*
 
-    PRIORITY QUEUE
+    PRIORITY QUEUE // logV insertar, eliminar
 
     (distancia acumulada, nodo)
 
     siempre sale primero el menor
 
+    usara un vector
+
+    greater hace que sea min heap
     */
 
     priority_queue<
@@ -31,8 +31,7 @@ int Reachability::AlcanceVehicular(int nodoOrigen, Grafo& grafo, double limiteMe
 
     pq.push({ 0, nodoOrigen });
 
-    vector<vector<Arista>>& lista =
-        grafo.GetListaAdyacenciasOriginal();
+    vector<vector<Arista>>& lista = grafo.GetListaAdyacenciasOriginal();
 
     while (!pq.empty())
     {
@@ -41,36 +40,22 @@ int Reachability::AlcanceVehicular(int nodoOrigen, Grafo& grafo, double limiteMe
 
         pq.pop();
 
-        /*
-
-        SI YA PASAMOS EL LIMITE
-        NO SEGUIMOS
-
-        */
+        // SI YA PASAMOS EL LIMITE NO SEGUIMOS
 
         if (distanciaActual > limiteMetros)
             continue;
 
-        /*
-
-        RECORRER VECINOS
-
-        */
+        // RECORRER VECINOS
 
         for (Arista& arista : lista[nodoActual])
         {
-            int vecino =
-                arista.GetNodoDestino();
+            int vecino = arista.GetNodoDestino();
 
-            double nuevaDistancia =
-                distanciaActual +
-                arista.GetDistanciaMestros();
+            double nuevaDistancia = distanciaActual + arista.GetDistanciaMestros();
 
-            /*
+            // RELAJACION
 
-            RELAJACION
-
-            */
+            //encontre un mejor camino Y la distancia encontrada esta dentro del limite
 
             if (nuevaDistancia < distancia[vecino] && nuevaDistancia <= limiteMetros)
             {
@@ -84,6 +69,8 @@ int Reachability::AlcanceVehicular(int nodoOrigen, Grafo& grafo, double limiteMe
     /*
 
     CONTAR NODOS ALCANZABLES
+
+    algunos nodos quedan con inf
 
     */
 

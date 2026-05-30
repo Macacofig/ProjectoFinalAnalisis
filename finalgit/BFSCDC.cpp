@@ -3,7 +3,7 @@
 //BFS PARA ENCONTRAR EL TAMANIO  DE UN COMPONENTE CONEXO
 //Visitados no se resetea -> porque queremos pasar una sola vez todo el grafo
 //si pasamos por un nodo ya visitado esque ya pertenece a un componente; lo pasamos
-int BFSCDC::BFSComponenteConexa(int NodoInicial, vector<bool>& NodoVisitado, Grafo& grafoNoDirigido)
+int BFSCDC::BFSComponenteConexa(int NodoInicial, vector<bool>& NodoVisitado, Grafo& grafoNoDirigido, vector<int>& nodosComponente )
 //usar el mismo vector de visitados creado
 //Usar el mismo grafo creado
 {
@@ -30,6 +30,10 @@ int BFSCDC::BFSComponenteConexa(int NodoInicial, vector<bool>& NodoVisitado, Gra
         //CONTAR NODO
 
         TamanoComponente++;
+
+        // guardar nodo del componente -> MST
+
+        nodosComponente.push_back(NodoActual);
 
         //RECORRER VECINOS
 

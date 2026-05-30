@@ -8,6 +8,6 @@ using namespace std;
 class BFSCDC
 {
 public:
-    static int BFSComponenteConexa(int NodoInicial, vector<bool>& NodoVisitado, Grafo& grafoNoDirigido);
+    static int BFSComponenteConexa(int NodoInicial, vector<bool>& NodoVisitado, Grafo& grafoNoDirigido, vector<int>& nodosComponente);
 };
 

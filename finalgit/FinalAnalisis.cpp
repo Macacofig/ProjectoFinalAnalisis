@@ -10,10 +10,12 @@
 #include "KruskalMST.h" // Emergencia
 #include "PrimMST.h" // Emergencia
 
+#include "ComparacionRuta.h"
+
 #include <chrono>
 using namespace std;
 
-GraphLoader cargador;
+GraphLoader cargadorGrafos;
 
 void ComponentesDebilmenteConexos(vector<int>& componenteGiganteNodos)
 {  
@@ -30,7 +32,7 @@ void ComponentesDebilmenteConexos(vector<int>& componenteGiganteNodos)
     */
     auto inicio_bfs = chrono::high_resolution_clock::now();
 
-    vector<bool> NodosVisitado(cargador.getGrafoNoDirigido().GetTotalNodos(), false);
+    vector<bool> NodosVisitado(cargadorGrafos.getGrafoNoDirigido().GetTotalNodos(), false);
 
     //VARIABLES DE RESULTADO
 
@@ -40,7 +42,7 @@ void ComponentesDebilmenteConexos(vector<int>& componenteGiganteNodos)
 
     //recorrer todos los nodos del grafo no dirigido
 
-    for (int NodoActual = 0; NodoActual < cargador.getGrafoNoDirigido().GetTotalNodos(); NodoActual++)
+    for (int NodoActual = 0; NodoActual < cargadorGrafos.getGrafoNoDirigido().GetTotalNodos(); NodoActual++)
     {
         //si el nodo no fue visitado hacemos bfs
 
@@ -51,7 +53,7 @@ void ComponentesDebilmenteConexos(vector<int>& componenteGiganteNodos)
 
             TotalComponentesConexas++;
 
-            int TamanoComponenteActual = BFSCDC::BFSComponenteConexa(NodoActual, NodosVisitado, cargador.getGrafoNoDirigido(),componenteActual);
+            int TamanoComponenteActual = BFSCDC::BFSComponenteConexa(NodoActual, NodosVisitado, cargadorGrafos.getGrafoNoDirigido(),componenteActual);
 
             // ACTUALIZAR COMPONENTE GIGANTE
 
@@ -84,11 +86,11 @@ void ComponentesDebilmenteConexos(vector<int>& componenteGiganteNodos)
     */
     auto inicio_dsu = chrono::high_resolution_clock::now();
 
-    int n = cargador.getGrafoNoDirigido().GetTotalNodos();
+    int n = cargadorGrafos.getGrafoNoDirigido().GetTotalNodos();
 
     DSU dsu(n);
 
-    vector<vector<Arista>>& listaAdyacencias = cargador.getGrafoNoDirigido().GetListaAdyacenciasOriginal();
+    vector<vector<Arista>>& listaAdyacencias = cargadorGrafos.getGrafoNoDirigido().GetListaAdyacenciasOriginal();
 
     // 1. UNIR TODAS LAS ARISTAS O(E)
     for (int u = 0; u < n; u++)
@@ -155,7 +157,7 @@ void AlcanceVehicular()
 
     auto inicio_dsu = chrono::high_resolution_clock::now();
 
-    int alcanzables = Reachability::AlcanceVehicular(nodoOrigen, cargador.getGrafoDirgido(), 5000);
+    int alcanzables = Reachability::AlcanceVehicular(nodoOrigen, cargadorGrafos.getGrafoDirgido(), 5000);
 
     auto fin_dsu = chrono::high_resolution_clock::now();
 
@@ -179,7 +181,7 @@ void AlcanceVehicular()
     */
     auto inicio = chrono::high_resolution_clock::now();
 
-    int alcanzablesb = BelmanFord::AlcanceVehicular(cargador.getGrafoDirgido(), nodoOrigen, 5000);
+    int alcanzablesb = BelmanFord::AlcanceVehicular(cargadorGrafos.getGrafoDirgido(), nodoOrigen, 5000);
 
     auto fin = chrono::high_resolution_clock::now();
 
@@ -216,14 +218,14 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
         3.3) Agregamos la distancia a la distanciatotalrecorrida
         3.4) Si las aristas que tenemos es Vertices - 1 cortamos el bucle (MST tiene V - 1)
     */
-    vector<bool> nodosComponenteGigante(cargador.getGrafoNoDirigido().GetTotalNodos(), false);
+    vector<bool> nodosComponenteGigante(cargadorGrafos.getGrafoNoDirigido().GetTotalNodos(), false);
 
     for (int nodo : componenteGiganteNodos)
     {
         nodosComponenteGigante[nodo] = true;
     }
     auto inicio = chrono::high_resolution_clock::now();
-    double distanciaTotalMetros = KruskalMST::ConstruirMST(cargador.getGrafoNoDirigido(),nodosComponenteGigante, componenteGiganteNodos.size());
+    double distanciaTotalMetros = KruskalMST::ConstruirMST(cargadorGrafos.getGrafoNoDirigido(),nodosComponenteGigante, componenteGiganteNodos.size());
     auto fin = chrono::high_resolution_clock::now();
 
     auto duracion = chrono::duration_cast<chrono::milliseconds>(fin - inicio);
@@ -235,7 +237,7 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
 
     auto inicioprim = chrono::high_resolution_clock::now();
 
-    double distanciaPrim = PrimMST::ConstruirMST(cargador.getGrafoNoDirigido(),nodosComponenteGigante);
+    double distanciaPrim = PrimMST::ConstruirMST(cargadorGrafos.getGrafoNoDirigido(),nodosComponenteGigante);
 
     auto finprim = chrono::high_resolution_clock::now();
 
@@ -257,23 +259,185 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
     */
     cout << "\nPRIM MST\n";
     cout << "Tiempo: " << duracionprim.count() << " ms\n";
+
     cout << "Distancia total: " << distanciaPrim / 1000.0 << " km\n";
+}
+
+void DiametroVial(vector<int>& componenteGiganteNodos)
+{
+    // Del componente grande, obtener la mayor distancia minima entre 2 nodos
+    /*
+        DIJKSTRA -> O((V + E) log V)
+        V: Vertices
+        E: Aristas
+        TOTAL -> O(Vg · (Vg + Eg) log Vg)
+        Vg : Vertices componente Gigante
+        Eg : Aristas componente gigante
+
+        1) Entrada a cada nodo del componenteGigante
+        2) A cada nodo aplicar dijsktra que devuelve la lista de distancias del origen a cada nodo
+        2.1) Nodo entra a dijkstra como priority_queue
+        2.2) Lo extraemos y verificamos si su distancia es mejor a la guardada
+        2.3) Si es mejor entramos a su lista de adyacencias, si no la obviamos
+        2.4) A cada vecino del NodoActual hacemos la verificacion 2.2, si su distancia menor a la guardada cambiamos, y la colocamos
+        en la priority_queue
+        3) Si la distancia es INF no lo utilizamos
+        4) Si no verificamos si la distancia a ese nodo es mayor a la guardada para reemplazar valores
+    */
+    
+    cout << "Diametro Vial\n";
+    auto iniciodij = chrono::high_resolution_clock::now();
+
+    double distanciaguardar = 0;
+    int origenguardar = -1;
+    int destinoguardar = -1;
+
+    //RECORRER TODOS LOS NODOS DE LA COMPONENTE GIGANTE
+    for (int origen : componenteGiganteNodos)
+    {
+        // A cada nodo aplicamos dijkstra, devolviendo una lista de distacancias minimas a un nodoDestino desde el origenActual
+        vector<double> dist = Reachability::DiametroVial(origen, cargadorGrafos.getGrafoNoDirigido());
+
+        // Buscar el nodo más lejano alcanzable desde este origen.
+
+        for (int destino : componenteGiganteNodos)
+        {
+            // Ignorar nodos no alcanzables
+            if (dist[destino] == numeric_limits<double>::infinity())
+            {
+                continue;
+            }
+
+            if (dist[destino] > distanciaguardar)
+            {
+                distanciaguardar = dist[destino];
+
+                origenguardar = origen;
+
+                destinoguardar = destino;
+            }
+        }
+    }
+    auto findij = chrono::high_resolution_clock::now();
+
+    auto duraciondij = chrono::duration_cast<chrono::milliseconds>(findij - iniciodij);
+    cout << "\Dijsktra\n";
+    cout << "Tiempo: " << duraciondij.count() << " ms\n";
+    cout << "Del Nodo "<<origenguardar<< " al Nodo "<<destinoguardar<<" existe una distancia de : " << distanciaguardar;
+    
+
+    /*
+        DOUBLE SWEEP
+
+        1) Elegimos cualquier nodo
+
+        2) Ejecutamos Dijkstra
+
+        3) Encontramos el nodo más lejano A
+
+        4) Ejecutamos Dijkstra desde A
+
+        5) Encontramos el nodo más lejano B
+
+        6) La distancia A-B es una aproximación del diámetro vial
+
+        Complejidad:
+
+        O((Vg + Eg) log Vg)
+
+        Solo ejecutamos Dijkstra dos veces
+    */
+
+    cout << "\nDiametro Vial Double Sweep\n";
+
+    auto inicio = chrono::high_resolution_clock::now();
+
+    //Tomar cualquier nodo de la componente gigante.
+
+    int nodoInicial = componenteGiganteNodos[0];
+
+    //Primer sweep
+
+    pair<double, int> primerSweep =
+        Reachability::DiametroVialDoubleSweep(nodoInicial,cargadorGrafos.getGrafoNoDirigido());
+
+    int extremoA = primerSweep.second;
+
+    //Segundo sweep
+
+    pair<double,int> segundoSweep =
+        Reachability::DiametroVialDoubleSweep(extremoA,cargadorGrafos.getGrafoNoDirigido());
+
+    int extremoB =segundoSweep.second;
+
+    double diametro =segundoSweep.first;
+
+    auto fin =chrono::high_resolution_clock::now();
+
+    auto duracion =chrono::duration_cast<chrono::milliseconds>(fin - inicio);
+
+    cout << "Tiempo: "<< duracion.count() << " ms\n";
+
+    cout << "Nodo extremo 1: "<< extremoA << " / ";
+
+    cout << "Nodo extremo 2: "<< extremoB << " / ";
+     
+    cout << "Distancia: "<< diametro << " metros\n";
+
+    cout << "Distancia: "<< diametro / 1000.0 << " km\n";
+
+}
+
+void RutaPorHorario()
+{
+    cout << "\nBONUS - Ruta por Tipo de Horario\n";
+
+    int origen;
+    int destino;
+
+    cout << "Nodo origen: ";
+    cin >> origen;
+
+    cout << "Nodo destino: ";
+    cin >> destino;
+
+    auto inicio = chrono::high_resolution_clock::now();
+
+    //double distancia = ComparacionRuta::DijkstraPeso(cargadorGrafos.getGrafoDirgido(), origen, destino, ComparacionRuta::DISTANCIA);
+
+    double tiempo =
+        ComparacionRuta::DijkstraPeso(cargadorGrafos.getGrafoDirgido(), origen, destino, ComparacionRuta::TIEMPO);
+
+    auto fin =chrono::high_resolution_clock::now();
+
+    auto duracion =chrono::duration_cast<chrono::milliseconds>(fin - inicio);
+
+    cout << "\nRESULTADOS\n";
+
+    //cout << "\nRuta minima por distancia\n";
+    //cout << "Distancia: "<< distancia / 1000.0<< " km\n";
+
+    cout << "\nRuta minima por tiempo\n";
+    cout << "Tiempo estimado: "<< tiempo<< " segundos\n";
+
+    cout << "\nTiempo de ejecucion: "<< duracion.count() << " ms\n";
 }
 int main()
 {
-    cargador.cargarGrafoDesdeCSV("nodes.csv", "edges.csv");
+    cargadorGrafos.cargarGrafoDesdeCSV("nodes.csv", "edges.csv");
     cout << "GRAFO CARGADO CORRECTAMENTE\n";
-    cout << "Total de nodos: " << cargador.getGrafoDirgido().GetTotalNodos() << "\n";
-    cout << "Total de aristas dirigido: " << cargador.getGrafoDirgido().GetTotalAristas() << "\n";
-    cout << "Total de nodos: " << cargador.getGrafoNoDirigido().GetTotalNodos() << "\n";
-    cout << "Total de aristas no dirigido: " << cargador.getGrafoNoDirigido().GetTotalAristas() << "\n";
+    cout << "Total de nodos: " << cargadorGrafos.getGrafoDirgido().GetTotalNodos() << "\n";
+    cout << "Total de aristas dirigido: " << cargadorGrafos.getGrafoDirgido().GetTotalAristas() << "\n";
+    cout << "Total de nodos: " << cargadorGrafos.getGrafoNoDirigido().GetTotalNodos() << "\n";
+    cout << "Total de aristas no dirigido: " << cargadorGrafos.getGrafoNoDirigido().GetTotalAristas() << "\n";
  
     vector<int> componenteGiganteNodos;
-    ComponentesDebilmenteConexos(componenteGiganteNodos);
-    AlcanceVehicular();
-    RutaEmergenciaMinima(componenteGiganteNodos);
+    //ComponentesDebilmenteConexos(componenteGiganteNodos);
+    //AlcanceVehicular();
+    // RutaEmergenciaMinima(componenteGiganteNodos);
+    //DiametroVial(componenteGiganteNodos);
 
-    
+    RutaPorHorario();
 
     
 }

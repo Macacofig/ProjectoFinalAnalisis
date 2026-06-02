@@ -1,14 +1,18 @@
 #include "ComparacionRuta.h"
 
-double ComparacionRuta::DijkstraPeso(Grafo& grafo, int origen, int destino, TipoPeso criterio)
+ComparacionRuta::ResultadoRuta ComparacionRuta::DijkstraPeso(Grafo& grafo, int origen, int destino, TipoPeso criterio)
 {
     int n = grafo.GetTotalNodos();
 
     const double INF = numeric_limits<double>::infinity();
 
     vector<double> dist(n, INF);
+    vector<double> distanciaReal(n, INF);
+
+    vector<int> parent(n, -1);
 
     dist[origen] = 0;
+    distanciaReal[origen] = 0;
 
     priority_queue<
         pair<double, int>,
@@ -51,13 +55,14 @@ double ComparacionRuta::DijkstraPeso(Grafo& grafo, int origen, int destino, Tipo
 
             if (criterio == DISTANCIA)
             {
-                
                 peso = arista.GetDistanciaMestros();
             }
             else
             {
                 if (arista.GetVelocidadMaxima() <= 0)
+                {
                     continue;
+                }
                 /*
                     tiempo(segundos)
 
@@ -72,14 +77,40 @@ double ComparacionRuta::DijkstraPeso(Grafo& grafo, int origen, int destino, Tipo
             }
 
             double nuevaDist = dist[nodoActual] + peso;
+            double nuevaDistanciaReal = distanciaReal[nodoActual] + arista.GetDistanciaMestros();
 
             if (nuevaDist < dist[vecino])
             {
                 dist[vecino] = nuevaDist;
-
+                distanciaReal[vecino] = nuevaDistanciaReal;
+                parent[vecino] = nodoActual;
                 pq.push({ nuevaDist, vecino});
             }
         }
     }
-    return dist[destino];
+    vector<int> camino;
+    if (dist[destino] != INF)
+    {
+        int actual = destino;
+
+        while (actual != -1)
+        {
+            camino.push_back(actual);
+
+            actual = parent[actual];
+        }
+
+        reverse(camino.begin(), camino.end());
+    }
+
+    ResultadoRuta resultado;
+
+    resultado.costo = dist[destino];
+
+    resultado.camino = camino;
+
+    resultado.cantidadNodos = camino.size();
+    resultado.dist = distanciaReal[destino];
+    return resultado;
+
 }

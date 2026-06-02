@@ -70,7 +70,8 @@ double KruskalMST::ConstruirMST(Grafo& grafo, vector<bool>& nodosComponenteGigan
     */
 
     sort( edges.begin(),edges.end(),
-        [](EdgeMST& a, EdgeMST& b) // explicar que significa esta parte (es la funcion para comparar pero por que [] eliminar este comentario
+        [](EdgeMST& a, EdgeMST& b) 
+        // No hay una funcion declarada en el codigo que haga la comparacion, [] permite no escribir esa funcion pero si poner la logica
         {
             return a.peso < b.peso;
         }

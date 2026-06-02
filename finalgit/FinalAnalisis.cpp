@@ -204,7 +204,7 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
     - usa la menor distancia total posible
     - NO forma ciclos
     */
-    cout << "Ruta Emergencia Minima\n";
+    cout << "\nRUTA EMERGENCIA MINIMA\n";
 
     /*
     KRUSKAL O(ElogE)
@@ -212,7 +212,7 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
         1.2) Las aristas extraidas tienen que pertenecer al componente gigante (Revisar MST en BFS para entender como se extrae)
         1.3) Las aristas pueden ser duplicadas, si llegamos a ese caso ignoramos 1
         2) Ordenamos las aristas por peso (distancia)
-        3) Aplicamos DSU : Explicar Porque *****
+        3) Aplicamos DSU : Esto ayuda a la deteccion de ciclo de forma eficiente, si un par de datos tienen el mismo padre ya estan conectados
         3.1) Recorremos aristas ordenadas ; extraemos (origen,destino,distancia)
         3.2) Si origen y destino no pertenecen al mismo grupo hacemos que formen el mismo grupo
         3.3) Agregamos la distancia a la distanciatotalrecorrida
@@ -235,14 +235,6 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
     cout << "Distancia total MST: " << distanciaTotalMetros / 1000.0 << " km\n";
 
 
-    auto inicioprim = chrono::high_resolution_clock::now();
-
-    double distanciaPrim = PrimMST::ConstruirMST(cargadorGrafos.getGrafoNoDirigido(),nodosComponenteGigante);
-
-    auto finprim = chrono::high_resolution_clock::now();
-
-    auto duracionprim = chrono::duration_cast<chrono::milliseconds>(finprim - inicioprim);
-
     /*
     PRIM O(ElogV)
         1) Agarramos la lista de adyacencias del grafo
@@ -257,6 +249,16 @@ void RutaEmergenciaMinima(vector<int>& componenteGiganteNodos)
         4.6) Repetimos el mismo control que en el 4.2,pero no lo marcamos como visitado. Además verificamos que ese nodo sea parte del componente gigante
         4.7) Agregamos el vecino al p_q
     */
+
+    auto inicioprim = chrono::high_resolution_clock::now();
+
+    double distanciaPrim = PrimMST::ConstruirMST(cargadorGrafos.getGrafoNoDirigido(),nodosComponenteGigante);
+
+    auto finprim = chrono::high_resolution_clock::now();
+
+    auto duracionprim = chrono::duration_cast<chrono::milliseconds>(finprim - inicioprim);
+
+    
     cout << "\nPRIM MST\n";
     cout << "Tiempo: " << duracionprim.count() << " ms\n";
 
@@ -285,7 +287,7 @@ void DiametroVial(vector<int>& componenteGiganteNodos)
         4) Si no verificamos si la distancia a ese nodo es mayor a la guardada para reemplazar valores
     */
     
-    cout << "Diametro Vial\n";
+    cout << "\nDIAMETRO VIAL\n";
     auto iniciodij = chrono::high_resolution_clock::now();
 
     double distanciaguardar = 0;
@@ -321,7 +323,7 @@ void DiametroVial(vector<int>& componenteGiganteNodos)
     auto findij = chrono::high_resolution_clock::now();
 
     auto duraciondij = chrono::duration_cast<chrono::milliseconds>(findij - iniciodij);
-    cout << "\Dijsktra\n";
+    cout << "\DIJSKTRA\n";
     cout << "Tiempo: " << duraciondij.count() << " ms\n";
     cout << "Del Nodo "<<origenguardar<< " al Nodo "<<destinoguardar<<" existe una distancia de : " << distanciaguardar;
     
@@ -348,7 +350,7 @@ void DiametroVial(vector<int>& componenteGiganteNodos)
         Solo ejecutamos Dijkstra dos veces
     */
 
-    cout << "\nDiametro Vial Double Sweep\n";
+    cout << "\nDouble Sweep\n";
 
     auto inicio = chrono::high_resolution_clock::now();
 
@@ -403,10 +405,21 @@ void RutaPorHorario()
 
     auto inicio = chrono::high_resolution_clock::now();
 
-    //double distancia = ComparacionRuta::DijkstraPeso(cargadorGrafos.getGrafoDirgido(), origen, destino, ComparacionRuta::DISTANCIA);
+    ComparacionRuta::ResultadoRuta rutaDistancia =
+        ComparacionRuta::DijkstraPeso(
+            cargadorGrafos.getGrafoDirgido(),
+            origen,
+            destino,
+            ComparacionRuta::DISTANCIA
+        );
 
-    double tiempo =
-        ComparacionRuta::DijkstraPeso(cargadorGrafos.getGrafoDirgido(), origen, destino, ComparacionRuta::TIEMPO);
+    ComparacionRuta::ResultadoRuta rutaTiempo =
+        ComparacionRuta::DijkstraPeso(
+            cargadorGrafos.getGrafoDirgido(),
+            origen,
+            destino,
+            ComparacionRuta::TIEMPO
+        );
 
     auto fin =chrono::high_resolution_clock::now();
 
@@ -414,17 +427,33 @@ void RutaPorHorario()
 
     cout << "\nRESULTADOS\n";
 
-    //cout << "\nRuta minima por distancia\n";
-    //cout << "Distancia: "<< distancia / 1000.0<< " km\n";
-
+    cout << "\nRuta minima por distancia\n";
+    cout << "Distancia: "<< rutaDistancia.costo / 1000.0<< " km\n";
+    cout << "Nodos recorridos: " << rutaDistancia.cantidadNodos << endl;
+    /*
+    cout << "Recorridos: " << endl;
+    for (auto& nodo : rutaDistancia.camino)
+    {
+        cout << nodo << "|";
+    }*/
+    cout << endl;
     cout << "\nRuta minima por tiempo\n";
-    cout << "Tiempo estimado: "<< tiempo<< " segundos\n";
-
+    cout << "Tiempo estimado: "<< rutaTiempo.costo<< " segundos\n";
+    cout << "Distancia: " << rutaTiempo.dist / 1000.0 << " km\n";
+    cout << "Nodos recorridos: " << rutaTiempo.cantidadNodos << endl;
+    
+    /*cout << "Recorridos: " << endl;
+    for (auto& nodo : rutaTiempo.camino)
+    {
+        cout << nodo << "|";
+    }*/
     cout << "\nTiempo de ejecucion: "<< duracion.count() << " ms\n";
 }
 int main()
 {
-    cargadorGrafos.cargarGrafoDesdeCSV("nodes.csv", "edges.csv");
+    //cargadorGrafos.cargarGrafoDesdeCSV("nodes.csv", "edges.csv");
+    //cargadorGrafos.cargarGrafoDesdeCSV("nodes_clean.csv", "edges_clean.csv");
+    cargadorGrafos.cargarGrafoDesdeCSV("nodes_smart.csv", "edges_smart.csv");
     cout << "GRAFO CARGADO CORRECTAMENTE\n";
     cout << "Total de nodos: " << cargadorGrafos.getGrafoDirgido().GetTotalNodos() << "\n";
     cout << "Total de aristas dirigido: " << cargadorGrafos.getGrafoDirgido().GetTotalAristas() << "\n";
@@ -434,9 +463,8 @@ int main()
     vector<int> componenteGiganteNodos;
     //ComponentesDebilmenteConexos(componenteGiganteNodos);
     //AlcanceVehicular();
-    // RutaEmergenciaMinima(componenteGiganteNodos);
+    //RutaEmergenciaMinima(componenteGiganteNodos);
     //DiametroVial(componenteGiganteNodos);
-
     RutaPorHorario();
 
     
